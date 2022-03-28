@@ -377,7 +377,7 @@ void loop()
     digitalWrite(LED_BUILTIN, ((millis() & 0x3FF) > 0x200));
   }
 
-  // Check for a directly addressed programming mode commandand always process data
+  // Check for a directly addressed programming mode command and always process data
   if (dataBus.specialAvailable() && (dataBus.readSpecialOpcode() == PROG_OPCODE && dataBus.readSpecialData() == config.channelOffset))
   {
     // Enter programming mode and reset the channel offset after we return

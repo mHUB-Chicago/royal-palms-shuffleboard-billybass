@@ -210,9 +210,9 @@ void write_config()
   Serial.println(F("Complete!"));
 }
 
-void actuation_test(unsigned long decisecs)
+void actuation_test(byte decisecs)
 {
-  unsigned long runtime = constrain(decisecs * 100, 100, 5000);
+  byte runtime = constrain(decisecs, 1, 50);
   Serial.print(F("Initiating actuation test with on time="));
   Serial.print(runtime);
   Serial.println(F("ms..."));
@@ -230,7 +230,11 @@ void actuation_test(unsigned long decisecs)
       // Unidirectional motor
       motors[i].setPower(config.actuationPowerUniDir, false);
     }
-    delay(runtime);
+    for(int i=0; i<runtime; i++){
+      //Prevent WD timeout during longer test patterns
+      wdt_reset();
+      delay(100);
+    }
     motors[i].setPower(0);
     wdt_reset();
   }

@@ -23,4 +23,6 @@ rpscprog --help
 #   set-option  Sets the specified configuration parameter to the provided value
 #   test        Tests all motors in the -ve direction for 2 seconds each in
 #               logical/channel order
+
+# NOTE: all subcommands also have a --help option to print detailed usage information.
 ```

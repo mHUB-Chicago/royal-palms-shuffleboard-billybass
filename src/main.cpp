@@ -210,9 +210,12 @@ void write_config()
   Serial.println(F("Complete!"));
 }
 
-void actuation_test()
+void actuation_test(unsigned long decisecs)
 {
-  Serial.println(F("Initiating actuation test..."));
+  unsigned long runtime = constrain(decisecs * 100, 100, 5000);
+  Serial.print(F("Initiating actuation test with on time="));
+  Serial.print(runtime);
+  Serial.println(F("ms..."));
   for (byte i = 0; i < N_MOTORS; i++)
   {
     Serial.print(F("Motor: "));
@@ -227,7 +230,7 @@ void actuation_test()
       // Unidirectional motor
       motors[i].setPower(config.actuationPowerUniDir, false);
     }
-    delay(2000);
+    delay(runtime);
     motors[i].setPower(0);
     wdt_reset();
   }
@@ -248,7 +251,8 @@ void programming_mode()
     if (dataBus.specialAvailable())
     {
       // Programming operations, always need to read the special data
-      switch (dataBus.readSpecialOpcode())
+      tmpByte = dataBus.readSpecialOpcode();
+      switch (tmpByte)
       {
       case CHANNEL_OFFSET_PROG_ADDRESS:
         // Channel offset, cap to acceptable values and *do not set if out of bounds*
@@ -280,9 +284,8 @@ void programming_mode()
         break;
       case ACTUATION_TEST_PROG_ADDRESS:
         // Tests the actuation of all motors
-        dataBus.readSpecialData(); // Discard the parameter, it's not used
         set_global_oper_mode(OPST_NORMAL);
-        actuation_test();
+        actuation_test(dataBus.readSpecialData());
         break;
       case PROG_EXIT_OPCODE:
         // Save if we see the PROG_EXIT_OPCODE as the data as well
@@ -296,6 +299,14 @@ void programming_mode()
         // Then exit
         programming = 0;
         break;
+      case PROG_OPCODE:
+        dataBus.readSpecialData(); // Discard the parameter
+        break; // Prints the current config
+      default:
+        dataBus.readSpecialData(); // Discard the parameter
+        Serial.print(F("Invalid programming opcode: 0x"));
+        Serial.println(tmpByte, HEX);
+        continue; // Don't print the config
       }
       print_config();
     }

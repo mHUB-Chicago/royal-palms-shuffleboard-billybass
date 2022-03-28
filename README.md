@@ -40,7 +40,7 @@ Successful entry into programming mode can be confirmed via a message printed vi
 * BIDIR_ACTUATION_POWER(0x2): Sets the amount of motor power (0-255) applied to actuate the bidirectional motors (typically the head/tail).
 * REVERSE_MASK(0x3): Bitmask defining which motors (in terms of *physical output number*) shall have their actuation direction reversed.
 * MOTOR_ORDER(0x4): Defines the index into the *motor_reorder_tbl* (defined in board.h) used to swap/remap the order of physical output pairs.
-* ACTUATION_TEST(0xF0): When invoked, each motor is actuated in the + direction for 2 seconds in order of increasing logical channel number. *argument is ignored*
+* ACTUATION_TEST(0xF0): When invoked, each motor is actuated in the + direction for 0.1 * (argument) seconds in order of increasing logical channel number. *actuation time is capped to 5s*
 
 #### Exiting programming mode
 To exit programming mode, send a programming command with opcode **0xFE** and data as follows:

@@ -17,26 +17,19 @@ def do_serial_command(ctx, opcode, data):
   logging.debug("prepared serial command: %s", binascii.hexlify(cmd))
 
   try:
-    with serial.Serial(ctx.obj['PORT'], ctx.obj['BAUD'], timeout=1) as sp:
+    with serial.Serial(ctx.obj['PORT'], ctx.obj['BAUD']) as sp:
       logging.debug("Opened %s", sp.port)
-      sp.send(cmd)
+      sp.write(cmd)
       sp.flush()
-      # Waits for 1 second of no data before considering response complete
-      return sp.readlines()
   except serial.serialutil.SerialException:
     logging.exception("Serial port communication error:")
     raise SystemExit(1)
 
 
-def print_reply(reply):
-  for response_line in reply:
-    click.echo(f"REPLY: {response_line}")
-
-
 def bitmap2int(bitmap_str):
   """Parses an ascii string of bit indicies that shall be set in 1 byte bitmap,
      returning the result as a 1 byte value"""
-  bit_idxs = bitmap_str.split(',')
+  bit_idxs = map(int, bitmap_str.split(','))
   output = 0x00
   for bit_idx in bit_idxs:
     output |= (1 << bit_idx)
@@ -69,29 +62,28 @@ def cli(ctx, port, baud, verbose, debug):
 @click.option('--no-test', is_flag=True, help="Disables the actuation test upon entering programming mode")
 @click.pass_context
 def enter_prog(ctx, target, no_test):
-  reply = list()
-  reply.extend(do_serial_command(ctx, 0xff, target))
+  do_serial_command(ctx, 0xff, target)
   if not no_test:
     time.sleep(0.1)
-    reply.extend(do_serial_command(ctx, 0xf0, 0x00))
-  print_reply(reply)
+    do_serial_command(ctx, 0xf0, 5)
 
 
 @cli.command(short_help="Exits programming mode on all connected boards currently in programming mode")
-@click.option('--save', is_flag=True, help="Saves the programming to the EEPROM upon exit")
+@click.option('--save/--no-save', help="Saves the programming to the EEPROM upon exit")
 @click.pass_context
 def exit_prog(ctx, save):
   if save:
-    reply = do_serial_command(ctx, 0xfe, 0xfe)
+    do_serial_command(ctx, 0xfe, 0xfe)
   else:
-    reply = do_serial_command(ctx, 0xfe, 0x00)
-  print_reply(reply)
+    logging.warning("Programming mode exited without saving changes!")
+    do_serial_command(ctx, 0xfe, 0x00)
 
 
-@cli.command(short_help="Tests all motors in the -ve direction for 2 seconds each in logical/channel order")
+@cli.command(short_help="Tests all motors in the +ve direction for (--time) tenths of a second each in logical/channel order")
+@click.option('--time', default=20, show_default=True, help="Time to actuate motors in tenths of a second")
 @click.pass_context
-def test(ctx):
-   do_serial_command(ctx, 0xf0, 0x00)
+def test(ctx, time):
+   do_serial_command(ctx, 0xf0, time)
 
 
 # All programmable parameters (indexes must match firmware configuration in board.h)
@@ -111,17 +103,21 @@ motor_orders = {'012': 0x00,
 
 @cli.command(short_help="Sets the specified configuration parameter to the provided value")
 @click.option('-o', '--option', type=click.Choice(parameter_dict.keys(), case_sensitive=False), required=True)
-@click.option('-t', '--value-type', type=click.Choice(['DEC', 'HEX', 'BIN', 'BITMAP', 'INDEX'], case_sensitive=False), required=True)
+@click.option('-t', '--value-type', type=click.Choice(['NUMBER', 'BITMAP', 'INDEX'], case_sensitive=False), default='NUMBER', show_default=True)
 @click.option('-v', '--value', type=click.STRING, required=True)
 @click.pass_context
 def set_option(ctx, option, value_type, value):
   # first preprocess the value per the stated type
-  if value_type == 'DEC':
-    proc_val = int(value)
-  elif value_type == 'HEX':
-    proc_val = int(value.removeprefix('0x'), 16)
-  elif value_type == 'BIN':
-    proc_val = int(value.removeprefix('0b'), 2)
+  if value_type == 'NUMBER':
+    if value.startswith('0x'):
+      value = value.removeprefix('0x')
+      base = 16
+    elif value.startswith('0b'):
+      value = value.removeprefix('0b')
+      base = 2
+    else:
+      base = 10
+    proc_val = int(value, base)
   elif value_type == 'BITMAP':
     proc_val = bitmap2int(value)
   elif value_type == 'INDEX':
@@ -135,9 +131,8 @@ def set_option(ctx, option, value_type, value):
     raise RuntimeError("set_parameter received value type not in list of choices! Click bug?")
 
   # Issue the programming command
-  logging.info("Setting parameter %s to value %s (0x%s)", parameter, value, hex(proc_val))
-  reply = do_serial_command(ctx, parameter_dict[option], proc_val)
-  print_reply(reply)
+  logging.info("Setting option %s to value %s (0x%s)", option, value, hex(proc_val))
+  do_serial_command(ctx, parameter_dict[option], proc_val)
 
 
 if __name__ == '__main__':

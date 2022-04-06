@@ -71,8 +71,10 @@ bool load_config(eeprom_config_t *cfg)
             Serial.println(F("Loaded legacy configuration, applying defaults for added parameters."));
             /* begin config upgrade handling */
             memcpy(cfg, &legacyCfg, sizeof(eeprom_legacy_config_t));
+            cfg->header = EEPROM_HEADER;
             cfg->rampRate = DEFAULT_RAMP_RATE;
             /* end config upgrade handling */
+            write_config(cfg);
         }
         break;
     }
@@ -86,6 +88,7 @@ bool load_config(eeprom_config_t *cfg)
         cfg->actuationPowerBiDir = DEFAULT_BIDIR_ACTUATION_POWER;
         cfg->reverseMask = DEFAULT_REVERSE_MASK;
         cfg->motorOrder = DEFAULT_MOTOR_ORDER;
+        cfg->rampRate = DEFAULT_RAMP_RATE;
         Serial.println(F("EEPROM header or CRC is invalid! Using defaults."));
     }
     return configOk;

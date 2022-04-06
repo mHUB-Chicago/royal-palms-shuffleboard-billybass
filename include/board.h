@@ -1,23 +1,5 @@
+#pragma once
 #include <Arduino.h>
-
-// EEPROM configuration struct
-#define EEPROM_HEADER 0xCAFE
-typedef struct __attribute__((packed)){
-    uint16_t header;
-    byte channelOffset;
-    byte actuationPowerUniDir;
-    byte actuationPowerBiDir;
-    byte reverseMask;
-    byte motorOrder;
-    uint16_t eepromCrc;
-} eeprom_config_t;
-
-// Default vaules when the above struct in EEPROM is invalid
-#define DEFAULT_CHANNEL_OFFSET 0
-#define DEFAULT_UNIDIR_ACTUATION_POWER 192
-#define DEFAULT_BIDIR_ACTUATION_POWER 255
-#define DEFAULT_REVERSE_MASK 0x0
-#define DEFAULT_MOTOR_ORDER 0x0
 
 // Motor and channel count, motor count must be even
 #define N_MOTORS 6

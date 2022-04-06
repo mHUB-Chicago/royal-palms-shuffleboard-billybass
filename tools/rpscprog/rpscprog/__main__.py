@@ -91,7 +91,8 @@ parameter_dict = {'CHANNEL_OFFSET': 0x00,
                   'UNIDIR_ACTUATION_POWER': 0x01,
                   'BIDIR_ACTUATION_POWER': 0x02,
                   'REVERSE_MASK': 0x03,
-                  'MOTOR_ORDER': 0x04}
+                  'MOTOR_ORDER': 0x04,
+                  'RAMP_RATE': 0x05}
 
 # All motor orders (must also be consistent with definition in board.h)
 motor_orders = {'012': 0x00,

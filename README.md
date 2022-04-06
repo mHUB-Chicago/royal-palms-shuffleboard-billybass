@@ -37,9 +37,10 @@ Successful entry into programming mode can be confirmed via a message printed vi
 *(default values defined in board.h)*
 * CHANNEL_OFFSET(0x0): Defines the numerical offset from channel 1 that the first channel on this board will respond to.
 * UNIDIR_ACTUATION_POWER(0x1): Sets the amount of motor power (0-255) applied to actuate the unidirectional motors (typically the mouth).
-* BIDIR_ACTUATION_POWER(0x2): Sets the amount of motor power (0-255) applied to actuate the bidirectional motors (typically the head/tail).
+* BIDIR_ACTUATION_POWER(0x2): Sets the amount of motor power (0-255) applied to actuate the bidirectional motors (typically the head/tail). Setting this to 0 causes all outputs to be treated as unidirectional.
 * REVERSE_MASK(0x3): Bitmask defining which motors (in terms of *physical output number*) shall have their actuation direction reversed.
 * MOTOR_ORDER(0x4): Defines the index into the *motor_reorder_tbl* (defined in board.h) used to swap/remap the order of physical output pairs.
+* RAMP_RATE(0x5): Defines the accleration ramp rate of the motor outputs in terms of power units per 8ms.
 * ACTUATION_TEST(0xF0): When invoked, each motor is actuated in the + direction for 0.1 * (argument) seconds in order of increasing logical channel number. *actuation time is capped to 5s*
 
 #### Exiting programming mode

@@ -38,13 +38,16 @@ const unsigned long rampInterval = 8;
 // Timer 0 prescaler config
 #if defined(TCCR0B)
 const unsigned long timeScale = 8;
-void enable_fast_timer0(bool enable){
-  if(enable){
+void enable_fast_timer0(bool enable)
+{
+  if (enable)
+  {
     // ~8KHz PWM via timer0 configuration (makes millis() tick 8x faster!)
     TCCR0B = (TCCR0B & B11111000) | 0b10;
     dataBus.setIdleTimeout(RENARD_DEFAULT_IDLE_TIMEOUT * 8);
   }
-  else {
+  else
+  {
     // Set default timer0 prescaler
     TCCR0B = (TCCR0B & B11111000) | 0b11;
     dataBus.setIdleTimeout(RENARD_DEFAULT_IDLE_TIMEOUT);
@@ -52,7 +55,7 @@ void enable_fast_timer0(bool enable){
 }
 #else
 const unsigned long timeScale = 1;
-void enable_fast_timer0(bool enable){ return; };
+void enable_fast_timer0(bool enable) { return; };
 #endif
 
 void attach_mapped_motor(byte physMotorNum, byte pin1, byte pin2, byte pwm)
@@ -153,7 +156,7 @@ void print_startup()
 
 void actuation_test(byte decisecs)
 {
-  unsigned int runtime = constrain(decisecs, 1, 50);
+  unsigned long runtime = timeScale * constrain(decisecs, 1, 50);
   unsigned long startTime;
   Serial.print(F("Initiating actuation test with on time="));
   Serial.print(runtime);
@@ -175,10 +178,11 @@ void actuation_test(byte decisecs)
     }
     // Perform acceleration and reset the watchdog for duration of the test movement
     startTime = millis();
-    lastRamp = millis();
-    while((millis() - startTime ) < (runtime * timeScale))
+    lastRamp = 0;
+    while ((millis() - startTime) < runtime)
     {
-      if((millis() - lastRamp) >= (rampInterval * timeScale)){
+      if ((millis() - lastRamp) >= (rampInterval * timeScale))
+      {
         motors[i].doRamp(config.rampRate);
         lastRamp = millis();
       }
@@ -304,12 +308,12 @@ void setup()
   // Apply channel offset derived from board ID
   dataBus.setChannelOffset(config.channelOffset);
 
-  // Enable ~31KHz PWM on timers 1 and 2 if supported
-  // Timer 0 only set to nonstandard frequency in operation as this makes millis() inaccurate!
-  #if defined(TCCR1B) && defined(TCCR2B) && defined(CS00)
+// Enable ~31KHz PWM on timers 1 and 2 if supported
+// Timer 0 only set to nonstandard frequency in operation as this makes millis() inaccurate!
+#if defined(TCCR1B) && defined(TCCR2B) && defined(CS00)
   TCCR1B = (TCCR1B & 0b11111000) | _BV(CS00);
   TCCR2B = (TCCR2B & 0b11111000) | _BV(CS00);
-  #endif
+#endif
 
   Serial.println(F("---Ready to operate---"));
   lastRamp = millis();
@@ -330,7 +334,7 @@ void loop()
   bool needRamp;
   if (!dataBus.isIdle())
   {
-    // Receiving current data
+    // Receiving valid data
     set_global_oper_mode(OPST_NORMAL);
     needRamp = ((millis() - lastRamp) >= (rampInterval * timeScale));
     for (byte i = 0; i < N_MOTORS; i++)
@@ -349,7 +353,7 @@ void loop()
         // Unidirectional motor
         motors[i].setPower(threshold(tmpA, config.actuationPowerUniDir), false);
       }
-      // Evaluate for accel
+      // Evaluate for accel. ramping
       if (needRamp)
         motors[i].doRamp(config.rampRate);
     }

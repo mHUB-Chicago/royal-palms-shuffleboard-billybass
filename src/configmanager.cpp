@@ -73,6 +73,7 @@ bool load_config(eeprom_config_t *cfg)
             memcpy(cfg, &legacyCfg, sizeof(eeprom_legacy_config_t));
             cfg->header = EEPROM_HEADER;
             cfg->rampRate = DEFAULT_RAMP_RATE;
+            cfg->actuationPowerBiDir = DEFAULT_BIDIR_ACTUATION_POWER;
             /* end config upgrade handling */
             write_config(cfg);
         }

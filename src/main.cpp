@@ -156,10 +156,11 @@ void print_startup()
 
 void actuation_test(byte decisecs)
 {
-  unsigned long runtime = timeScale * constrain(decisecs, 1, 50);
+  unsigned long realtime = 100UL * constrain(decisecs, 1, 50);
+  unsigned long runtime = timeScale * realtime;
   unsigned long startTime;
   Serial.print(F("Initiating actuation test with on time="));
-  Serial.print(runtime);
+  Serial.print(realtime);
   Serial.println(F("/10 sec..."));
   for (byte i = 0; i < N_MOTORS; i++)
   {

@@ -16,7 +16,7 @@
 #define PROG_OPCODE 0xFF
 
 //#define VERBOSE_OUTPUT
-#define VERSION_STR F("0.5.0")
+#define VERSION_STR F("0.5.1")
 
 // A few global vars ...
 #define CHANNEL_OFFSET_MAX (RENARD_MAX_ADDRESS - N_CHANNELS)
@@ -156,11 +156,10 @@ void print_startup()
 
 void actuation_test(byte decisecs)
 {
-  unsigned long realtime = 100UL * constrain(decisecs, 1, 50);
-  unsigned long runtime = timeScale * realtime;
+  unsigned long runtime = (timeScale * 100UL) * constrain(decisecs, 1, 50);
   unsigned long startTime;
   Serial.print(F("Initiating actuation test with on time="));
-  Serial.print(realtime);
+  Serial.print(decisecs);
   Serial.println(F("/10 sec..."));
   for (byte i = 0; i < N_MOTORS; i++)
   {
